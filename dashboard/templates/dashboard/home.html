@@ -1,0 +1,270 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Carbon Footprint Intelligence Platform</title>
+
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'dashboard/style.css' %}">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+<main class="container">
+
+    <header class="page-header">
+        <p class="eyebrow">ENVIRONMENTAL INTELLIGENCE</p>
+        <h1>Carbon Footprint Intelligence Platform</h1>
+        <p>
+            AI-powered object detection and electricity emissions estimation.
+        </p>
+    </header>
+
+    <form method="POST" enctype="multipart/form-data" class="panel">
+        {% csrf_token %}
+
+        <h2>Computer Vision</h2>
+
+        <label for="building_image">Upload an image</label>
+        <input
+            type="file"
+            id="building_image"
+            name="building_image"
+            accept=".jpg,.jpeg,.png,.webp"
+        >
+
+        <p class="hint">
+            JPEG, PNG or WebP. Maximum 5 MB.
+        </p>
+
+        <hr>
+
+        <h2>Carbon Footprint Calculator</h2>
+
+        <label for="electricity">
+            Electricity consumption (kWh)
+        </label>
+        <input
+            type="number"
+            id="electricity"
+            name="electricity"
+            min="0"
+            step="any"
+            value="{{ electricity|default_if_none:'' }}"
+            required
+        >
+
+        <label for="reduction_percent">
+            Simulated electricity reduction (%)
+        </label>
+        <input
+            type="number"
+            id="reduction_percent"
+            name="reduction_percent"
+            min="0"
+            max="100"
+            step="any"
+            value="{{ reduction_percent }}"
+            required
+        >
+
+        <button type="submit">Analyze Image and Calculate</button>
+    </form>
+
+    {% if image_message %}
+        <section class="panel">
+            <p>{{ image_message }}</p>
+        </section>
+    {% endif %}
+
+    {% if detection_error %}
+        <section class="panel error-panel">
+            <h2>Detection Error</h2>
+            <p>{{ detection_error }}</p>
+            <p>Check the VS Code terminal for the detailed error.</p>
+        </section>
+    {% endif %}
+
+    {% if uploaded_image_url %}
+        <section class="panel">
+            <h2>Original Image</h2>
+            <img
+                class="analysis-image"
+                src="{{ uploaded_image_url }}"
+                alt="Original uploaded image"
+            >
+        </section>
+    {% endif %}
+
+    {% if annotated_image_url %}
+        <section class="panel">
+            <h2>AI Object Detection Results</h2>
+
+            <img
+                class="analysis-image"
+                src="{{ annotated_image_url }}"
+                alt="Detected objects with bounding boxes"
+            >
+
+            <div class="stats-grid">
+                <article class="stat-card">
+                    <p>Total objects detected</p>
+                    <h3>{{ total_objects }}</h3>
+                </article>
+
+                <article class="stat-card">
+                    <p>Object categories found</p>
+                    <h3>{{ object_counts|length }}</h3>
+                </article>
+            </div>
+
+            {% if object_counts %}
+                <h3>Object Category Chart</h3>
+
+                <div class="chart-container">
+                    <canvas id="objectChart"></canvas>
+                </div>
+
+                <h3>Object Category Summary</h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Object category</th>
+                            <th>Count</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for name, count in object_counts.items %}
+                            <tr>
+                                <td>{{ name|title }}</td>
+                                <td>{{ count }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No supported objects were detected.</p>
+            {% endif %}
+
+            {% if detections %}
+                <h3>Detection Details</h3>
+
+                <ul class="detection-list">
+                    {% for item in detections %}
+                        <li>
+                            <strong>{{ item.name|title }}</strong>
+                            — {{ item.confidence }}% confidence
+                            <br>
+                            <small>Bounding box: {{ item.box }}</small>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </section>
+    {% endif %}
+
+    {% if calculation_error %}
+        <section class="panel error-panel">
+            <p>{{ calculation_error }}</p>
+        </section>
+    {% endif %}
+
+    {% if result != None %}
+        <section class="panel">
+            <h2>Carbon Footprint Results</h2>
+
+            <div class="stats-grid">
+                <article class="stat-card">
+                    <p>Estimated emissions</p>
+                    <h3>{{ result|floatformat:2 }}</h3>
+                    <span>kg CO₂e</span>
+                </article>
+
+                <article class="stat-card">
+                    <p>Estimated emissions saved</p>
+                    <h3>{{ saved_emissions|floatformat:2 }}</h3>
+                    <span>kg CO₂e</span>
+                </article>
+            </div>
+
+            <p>Footprint category: <strong>{{ footprint_status }}</strong></p>
+            <p>Simulated reduction: {{ reduction_percent }}%</p>
+
+            <p>
+                Simulated electricity after reduction:
+                {{ reduced_usage|floatformat:2 }} kWh
+            </p>
+
+            <p>
+                Estimated emissions after reduction:
+                {{ reduced_emissions|floatformat:2 }} kg CO₂e
+            </p>
+
+            <p class="hint">
+                Demo emission factor: {{ emission_factor }} kg CO₂e/kWh.
+                Replace this with a verified factor appropriate to your
+                electricity source and location.
+            </p>
+
+            <div class="progress-track">
+                <div
+                    class="progress-fill"
+                    style="width:{{ bar_width }}%;"
+                ></div>
+            </div>
+
+            <p class="hint">
+                Remaining electricity use after the simulated reduction.
+            </p>
+        </section>
+    {% endif %}
+
+</main>
+
+{% if object_counts %}
+<script>
+    const categoryLabels = [
+        {% for name, count in object_counts.items %}
+            "{{ name|escapejs }}",
+        {% endfor %}
+    ];
+
+    const categoryCounts = [
+        {% for name, count in object_counts.items %}
+            {{ count }},
+        {% endfor %}
+    ];
+
+    new Chart(document.getElementById("objectChart"), {
+        type: "bar",
+        data: {
+            labels: categoryLabels,
+            datasets: [{
+                label: "Number of objects",
+                data: categoryCounts,
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endif %}
+
+</body>
+</html>

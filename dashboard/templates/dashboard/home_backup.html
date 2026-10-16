@@ -1,0 +1,284 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carbon Footprint Intelligence Platform</title>
+
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'dashboard/style.css' %}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+<main class="container">
+
+    <header class="page-header">
+        <p class="eyebrow">ENVIRONMENTAL INTELLIGENCE</p>
+        <h1>Carbon Footprint Intelligence Platform</h1>
+        <p>Computer vision, carbon emissions estimation and Digital Twin simulation.</p>
+    </header>
+
+    <form method="POST" enctype="multipart/form-data" class="panel">
+        {% csrf_token %}
+
+        <h2>Computer Vision</h2>
+
+        <label for="building_image">Upload a building or environment image</label>
+        <input
+            type="file"
+            id="building_image"
+            name="building_image"
+            accept=".jpg,.jpeg,.png,.webp"
+        >
+        <p class="hint">JPEG, PNG or WebP. Maximum 5 MB.</p>
+
+        <hr>
+
+        <h2>Carbon Footprint Calculator</h2>
+        <p class="hint">
+            Enter your activity data. Leave unused categories at zero.
+        </p>
+
+        <label for="electricity">Electricity consumption (kWh)</label>
+        <input type="number" id="electricity" name="electricity"
+               min="0" step="any"
+               value="{{ electricity|default_if_none:'' }}">
+
+        <label for="vehicles">Number of vehicles</label>
+        <input type="number" id="vehicles" name="vehicles"
+               min="0" step="1" value="{{ vehicles|default_if_none:'0' }}">
+
+        <label for="distance_km">Distance travelled per vehicle (km)</label>
+        <input type="number" id="distance_km" name="distance_km"
+               min="0" step="any" value="{{ distance_km|default_if_none:'0' }}">
+
+        <label for="solar_kwh">Solar electricity generated (kWh)</label>
+        <input type="number" id="solar_kwh" name="solar_kwh"
+               min="0" step="any" value="{{ solar_kwh|default_if_none:'0' }}">
+
+        <label for="ac_hours">AC usage (hours)</label>
+        <input type="number" id="ac_hours" name="ac_hours"
+               min="0" step="any" value="{{ ac_hours|default_if_none:'0' }}">
+
+        <label for="waste_kg">Waste generated (kg)</label>
+        <input type="number" id="waste_kg" name="waste_kg"
+               min="0" step="any" value="{{ waste_kg|default_if_none:'0' }}">
+
+        <hr>
+
+        <h2>Digital Twin Simulation</h2>
+
+        <label for="reduction_percent">Simulated emissions reduction (%)</label>
+        <input type="number" id="reduction_percent" name="reduction_percent"
+               min="0" max="100" step="any"
+               value="{{ reduction_percent|default_if_none:'20' }}">
+
+        <button type="submit">Analyze Image and Calculate Footprint</button>
+    </form>
+
+    {% if image_message %}
+    <section class="panel">
+        <p>{{ image_message }}</p>
+    </section>
+    {% endif %}
+
+    {% if detection_error %}
+    <section class="panel error-panel">
+        <h2>Detection Error</h2>
+        <p>{{ detection_error }}</p>
+    </section>
+    {% endif %}
+
+    {% if uploaded_image_url %}
+    <section class="panel">
+        <h2>Original Image</h2>
+        <img class="analysis-image" src="{{ uploaded_image_url }}"
+             alt="Original uploaded image">
+    </section>
+    {% endif %}
+
+    {% if annotated_image_url %}
+    <section class="panel">
+        <h2>YOLO Object Detection Results</h2>
+        <img class="analysis-image" src="{{ annotated_image_url }}"
+             alt="Image annotated with detected objects">
+
+        <div class="stats-grid">
+            <article class="stat-card">
+                <p>Total objects detected</p>
+                <h3>{{ total_objects }}</h3>
+            </article>
+            <article class="stat-card">
+                <p>Object categories found</p>
+                <h3>{{ object_counts|length }}</h3>
+            </article>
+        </div>
+
+        {% if object_counts %}
+        <h3>Object Category Chart</h3>
+        <div class="chart-container">
+            <canvas id="objectChart"></canvas>
+        </div>
+
+        <h3>Object Category Summary</h3>
+        <table>
+            <thead><tr><th>Category</th><th>Count</th></tr></thead>
+            <tbody>
+                {% for name, count in object_counts.items %}
+                <tr><td>{{ name|title }}</td><td>{{ count }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>No supported objects were detected.</p>
+        {% endif %}
+
+        {% if detections %}
+        <h3>Detection Details</h3>
+        <ul class="detection-list">
+            {% for item in detections %}
+            <li>
+                <strong>{{ item.name|title }}</strong>
+                — {{ item.confidence }}% confidence
+                <br><small>Bounding box: {{ item.box }}</small>
+            </li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </section>
+    {% endif %}
+
+    {% if calculation_error %}
+    <section class="panel error-panel">
+        <h2>Calculation Error</h2>
+        <p>{{ calculation_error }}</p>
+    </section>
+    {% endif %}
+
+    {% if result != None %}
+    <section class="panel">
+        <h2>Carbon Footprint Results</h2>
+
+        <div class="stats-grid">
+            <article class="stat-card">
+                <p>Total estimated emissions</p>
+                <h3>{{ result|floatformat:2 }}</h3>
+                <span>kg CO₂e (demo estimate)</span>
+            </article>
+            <article class="stat-card">
+                <p>Potential emissions saved</p>
+                <h3>{{ saved_emissions|floatformat:2 }}</h3>
+                <span>kg CO₂e</span>
+            </article>
+            <article class="stat-card">
+                <p>Footprint category</p>
+                <h3>{{ footprint_status }}</h3>
+                <span>Illustrative thresholds</span>
+            </article>
+        </div>
+
+        <h3>Emissions by Category</h3>
+        {% if emission_breakdown %}
+        <table>
+            <thead><tr><th>Category</th><th>Estimated emissions (kg CO₂e)</th></tr></thead>
+            <tbody>
+                <tr><td>Electricity</td><td>{{ emission_breakdown.Electricity|floatformat:2 }}</td></tr>
+                <tr><td>Transportation</td><td>{{ emission_breakdown.Transportation|floatformat:2 }}</td></tr>
+                <tr><td>Waste</td><td>{{ emission_breakdown.Waste|floatformat:2 }}</td></tr>
+                <tr><th>Total</th><th>{{ emission_breakdown.Total|floatformat:2 }}</th></tr>
+            </tbody>
+        </table>
+
+        <div class="chart-container">
+            <canvas id="emissionsChart"></canvas>
+        </div>
+
+        <p>Grid electricity after solar offset: {{ grid_electricity|floatformat:2 }} kWh</p>
+        <p>Estimated AC electricity use: {{ ac_electricity|floatformat:2 }} kWh</p>
+        {% endif %}
+
+        <hr>
+
+        <h2>Digital Twin: What-if Simulation</h2>
+        <p>Simulated reduction: {{ reduction_percent }}%</p>
+        <p>Estimated emissions before: {{ result|floatformat:2 }} kg CO₂e</p>
+        <p>Estimated emissions after: {{ reduced_emissions|floatformat:2 }} kg CO₂e</p>
+        <p>Potential savings: {{ saved_emissions|floatformat:2 }} kg CO₂e</p>
+
+        <div class="progress-track">
+            <div class="progress-fill" style="width:{{ bar_width }}%;"></div>
+        </div>
+        <p class="hint">Bar indicates the remaining percentage after the simulated reduction.</p>
+
+        <p class="hint">
+            Illustrative factors: electricity 0.70 kg CO₂e/kWh,
+            transport 0.12 kg CO₂e/vehicle-km, waste 0.50 kg CO₂e/kg,
+            and AC load 2.0 kW. These are demo assumptions, not verified
+            reporting factors. Results depend on the accuracy of your inputs.
+        </p>
+    </section>
+    {% endif %}
+
+</main>
+
+{% if object_counts %}
+<script>
+const categoryLabels = [
+    {% for name, count in object_counts.items %}
+    "{{ name|escapejs }}",
+    {% endfor %}
+];
+const categoryCounts = [
+    {% for name, count in object_counts.items %}
+    {{ count }},
+    {% endfor %}
+];
+
+new Chart(document.getElementById("objectChart"), {
+    type: "bar",
+    data: {
+        labels: categoryLabels,
+        datasets: [{
+            label: "Number of objects",
+            data: categoryCounts,
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+    }
+});
+</script>
+{% endif %}
+
+{% if emission_breakdown %}
+<script>
+new Chart(document.getElementById("emissionsChart"), {
+    type: "bar",
+    data: {
+        labels: ["Electricity", "Transportation", "Waste"],
+        datasets: [{
+            label: "Estimated emissions (kg CO₂e)",
+            data: [
+                {{ emission_breakdown.Electricity }},
+                {{ emission_breakdown.Transportation }},
+                {{ emission_breakdown.Waste }}
+            ],
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: { y: { beginAtZero: true } }
+    }
+});
+</script>
+{% endif %}
+
+</body>
+</html>

@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sustainability Hub | CarbonLens</title>
+
+    <style>
+        :root {
+            --green: #176044;
+            --dark-green: #0b4032;
+            --light-green: #e8f3eb;
+            --page-bg: #eef5ef;
+            --card-bg: #ffffff;
+            --border: #d8e6dc;
+            --text: #193a30;
+            --muted: #687c72;
+            --shadow: 0 5px 20px rgba(16, 64, 45, 0.06);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            background: var(--page-bg);
+            color: var(--text);
+            font-family: "Segoe UI", Arial, sans-serif;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        .top-bar {
+            height: 10px;
+            background: var(--dark-green);
+        }
+
+        .container {
+            width: min(1400px, 100%);
+            margin: 0 auto;
+            padding: 28px 24px 45px;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .page-header h1 {
+            margin: 0;
+            color: var(--dark-green);
+            font-size: clamp(25px, 3vw, 35px);
+            line-height: 1.25;
+        }
+
+        .page-header p {
+            margin: 8px 0 0;
+            color: var(--muted);
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--green);
+            font-weight: 700;
+            text-decoration: none;
+            padding: 10px 14px;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+        }
+
+        .back-link:hover {
+            background: var(--light-green);
+        }
+
+        .notice {
+            padding: 14px 17px;
+            border-radius: 12px;
+            margin-bottom: 18px;
+            overflow-wrap: anywhere;
+        }
+
+        .success {
+            background: #e4f5e8;
+            border: 1px solid #b9dec2;
+            color: #155d35;
+        }
+
+        .error {
+            background: #fff0ed;
+            border: 1px solid #f0c6bd;
+            color: #8a3025;
+        }
+
+        /* Summary cards */
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .summary-card {
+            min-width: 0;
+            padding: 23px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            box-shadow: var(--shadow);
+        }
+
+        .summary-label {
+            color: var(--muted);
+            font-size: 14px;
+            margin-bottom: 9px;
+        }
+
+        .summary-value {
+            color: var(--dark-green);
+            font-size: clamp(24px, 2.5vw, 34px);
+            font-weight: 750;
+            line-height: 1.25;
+            overflow-wrap: anywhere;
+        }
+
+        .summary-note {
+            margin-top: 9px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        /* Main content panels */
+
+        .panel {
+            min-width: 0;
+            padding: 26px;
+            margin-bottom: 22px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            box-shadow: var(--shadow);
+        }
+
+        .panel h2 {
+            margin: 0 0 9px;
+            color: var(--dark-green);
+            font-size: clamp(21px, 2vw, 26px);
+            line-height: 1.35;
+        }
+
+        .intro {
+            margin: 0 0 20px;
+            color: var(--muted);
+        }
+
+        .small-muted {
+            color: var(--muted);
+            font-size: 13px;
+            overflow-wrap: anywhere;
+        }
+
+        /* Waste suggestion cards */
+
+        .suggestion-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+            margin-top: 18px;
+        }
+
+        .suggestion {
+            min-width: 0;
+            padding: 21px;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            background: #fcfefa;
+        }
+
+        .suggestion h3 {
+            margin: 0 0 8px;
+            color: var(--dark-green);
+            font-size: 20px;
+            overflow-wrap: anywhere;
+        }
+
+        .suggestion p {
+            margin: 13px 0 0;
+            overflow-wrap: anywhere;
+        }
+
+        .tag {
+            display: inline-block;
+            max-width: 100%;
+            margin-top: 10px;
+            padding: 5px 11px;
+            border-radius: 30px;
+            background: var(--light-green);
+            color: var(--green);
+            font-size: 12px;
+            font-weight: 700;
+            overflow-wrap: anywhere;
+        }
+
+        .verification-notice {
+            margin-top: 14px;
+            padding: 12px;
+            border-radius: 10px;
+            background: #fff7df;
+            color: #795a13;
+            font-size: 13px;
+            overflow-wrap: anywhere;
+        }
+
+        .empty {
+            padding: 26px 18px;
+            border: 1px dashed #c8d9cc;
+            border-radius: 12px;
+            background: #f8fbf7;
+            color: var(--muted);
+            text-align: center;
+        }
+
+        /* Forms */
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 20px;
+        }
+
+        .field {
+            min-width: 0;
+        }
+
+        .field.full {
+            grid-column: 1 / -1;
+        }
+
+        .field label {
+            display: block;
+            margin-bottom: 7px;
+            color: var(--dark-green);
+            font-weight: 650;
+        }
+
+        .field input,
+        .field select,
+        .field textarea {
+            display: block;
+            width: 100%;
+            min-width: 0;
+            padding: 12px 13px;
+            border: 1px solid #cbded0;
+            border-radius: 10px;
+            background: #fbfdf9;
+            color: var(--text);
+            font: inherit;
+        }
+
+        .field input:focus,
+        .field select:focus,
+        .field textarea:focus {
+            outline: none;
+            border-color: var(--green);
+            box-shadow: 0 0 0 3px rgba(23, 96, 68, 0.12);
+        }
+
+        .form-submit {
+            display: inline-block;
+            margin-top: 22px;
+            padding: 12px 21px;
+            border: none;
+            border-radius: 10px;
+            background: var(--green);
+            color: white;
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.2s;
+        }
+
+        .form-submit:hover {
+            background: var(--dark-green);
+            transform: translateY(-1px);
+        }
+
+        /* Tables */
+
+        .table-wrap {
+            width: 100%;
+            overflow-x: auto;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+
+        table {
+            width: 100%;
+            min-width: 750px;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th,
+        td {
+            padding: 13px 15px;
+            border-bottom: 1px solid #e7eee8;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        th {
+            background: #eaf3eb;
+            color: var(--dark-green);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        tbody tr:hover td {
+            background: #f8fbf7;
+        }
+
+        /* Chart */
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 100%;
+            height: 330px;
+        }
+
+        /* Action history */
+
+        .action-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .action-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            min-width: 0;
+            padding: 16px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: #fcfefa;
+        }
+
+        .action-item > div {
+            min-width: 0;
+            overflow-wrap: anywhere;
+        }
+
+        .points {
+            flex-shrink: 0;
+            color: var(--green);
+            font-weight: 750;
+            white-space: nowrap;
+        }
+
+        footer {
+            padding: 10px 5px;
+            color: var(--muted);
+            font-size: 12px;
+            text-align: center;
+        }
+
+        @media (max-width: 1050px) {
+            .summary-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 700px) {
+            .container {
+                padding: 20px 14px 32px;
+            }
+
+            .panel {
+                padding: 19px;
+                margin-bottom: 16px;
+            }
+
+            .summary-grid,
+            .suggestion-grid,
+            .form-grid {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .field.full {
+                grid-column: auto;
+            }
+
+            .summary-card {
+                padding: 19px;
+            }
+
+            .chart-container {
+                height: 270px;
+            }
+
+            .action-item {
+                align-items: flex-start;
+            }
+        }
+
+        @media (max-width: 420px) {
+            .page-header h1 {
+                font-size: 25px;
+            }
+
+            .panel {
+                padding: 15px;
+            }
+
+            .action-item {
+                flex-direction: column;
+                gap: 8px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="top-bar"></div>
+
+    <main class="container">
+
+        <header class="page-header">
+            <div>
+                <h1>🌿 Sustainability Hub</h1>
+                <p>Track waste, explore carbon scenarios, and record sustainable actions.</p>
+            </div>
+
+            <a class="back-link" href="{% url 'home' %}">
+                ← Back to main dashboard
+            </a>
+        </header>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="notice success">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+
+        {% if error %}
+            <div class="notice error">{{ error }}</div>
+        {% endif %}
+
+        <!-- SUMMARY -->
+
+        <section class="summary-grid">
+            <article class="summary-card">
+                <div class="summary-label">Waste recorded</div>
+                <div class="summary-value">
+                    {{ total_waste_kg|floatformat:2 }} kg
+                </div>
+                <div class="summary-note">Total weight of saved records</div>
+            </article>
+
+            <article class="summary-card">
+                <div class="summary-label">Estimated difference</div>
+                <div class="summary-value">
+                    {{ total_avoided|floatformat:3 }}
+                </div>
+                <div class="summary-note">Illustrative kg CO₂e; not verified savings</div>
+            </article>
+
+            <article class="summary-card">
+                <div class="summary-label">Action points</div>
+                <div class="summary-value">{{ total_points }}</div>
+                <div class="summary-note">Points from recorded actions</div>
+            </article>
+
+            <article class="summary-card">
+                <div class="summary-label">Sustainability score</div>
+                <div class="summary-value">{{ sustainability_score }}/100</div>
+                <div class="summary-note">Engagement score based on recorded actions</div>
+            </article>
+        </section>
+
+        <!-- WASTE SEGREGATION -->
+
+        <section class="panel">
+            <h2>♻️ AI Waste Segregation Assistant</h2>
+            <p class="intro">
+                Review suggestions from your latest saved camera scan.
+                Confirm the material before choosing how to dispose of it.
+            </p>
+
+            {% if latest_scan %}
+                <p class="small-muted">
+                    Latest scan:
+                    {{ latest_scan.created_at|date:"d M Y, H:i" }}
+                    · Objects detected: {{ latest_scan.total_objects }}
+                </p>
+            {% endif %}
+
+            {% if suggestions %}
+                <div class="suggestion-grid">
+                    {% for suggestion in suggestions %}
+                        <article class="suggestion">
+                            <h3>{{ suggestion.name }}</h3>
+
+                            <div class="small-muted">
+                                Detection confidence: {{ suggestion.confidence }}%
+                            </div>
+
+                            <span class="tag">{{ suggestion.category }}</span>
+
+                            <p>
+                                <strong>Suggested material:</strong>
+                                {{ suggestion.material|title }}
+                            </p>
+
+                            <p>
+                                <strong>Guidance:</strong>
+                                {{ suggestion.instruction }}
+                            </p>
+
+                            {% if suggestion.needs_verification %}
+                                <div class="verification-notice">
+                                    ⚠️ Verify the actual material and local disposal
+                                    rules before recycling or composting.
+                                </div>
+                            {% endif %}
+                        </article>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty">
+                    No suggestions are available yet. Run a camera scan from the
+                    main dashboard and return here.
+                </div>
+            {% endif %}
+        </section>
+
+        <!-- RECORD WASTE -->
+
+        <section class="panel">
+            <h2>📉 Record Waste and Estimate Carbon Impact</h2>
+            <p class="intro">
+                Enter the material, weight, quantity, and disposal scenario.
+            </p>
+
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="save_waste">
+
+                <div class="form-grid">
+                    <div class="field">
+                        <label for="material">Waste material</label>
+                        <select id="material" name="material" required>
+                            <option value="plastic">Plastic</option>
+                            <option value="paper">Paper and cardboard</option>
+                            <option value="metal">Metal</option>
+                            <option value="glass">Glass</option>
+                            <option value="organic">Organic waste</option>
+                            <option value="ewaste">Electronic waste</option>
+                            <option value="general">General waste</option>
+                            <option value="unknown">Unknown / verify material</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="weight_kg">Total weight (kg)</label>
+                        <input id="weight_kg" name="weight_kg"
+                               type="number" min="0.01" max="10000"
+                               step="0.01" placeholder="e.g. 1.5" required>
+                    </div>
+
+                    <div class="field">
+                        <label for="quantity">Number of items</label>
+                        <input id="quantity" name="quantity"
+                               type="number" min="1" step="1"
+                               value="1" required>
+                    </div>
+
+                    <div class="field">
+                        <label for="disposal_method">Disposal scenario</label>
+                        <select id="disposal_method" name="disposal_method" required>
+                            <option value="recycle">Recycle</option>
+                            <option value="compost">Compost</option>
+                            <option value="reuse">Reuse</option>
+                            <option value="landfill">Landfill</option>
+                            <option value="not_recorded">Not recorded</option>
+                        </select>
+                    </div>
+
+                    {% if latest_scan %}
+                        <div class="field full">
+                            <label for="camera_scan_id">Link a camera scan (optional)</label>
+                            <select id="camera_scan_id" name="camera_scan_id">
+                                <option value="">No scan linked</option>
+                                {% for scan in scans %}
+                                    <option value="{{ scan.pk }}">
+                                        Scan #{{ scan.pk }} —
+                                        {{ scan.created_at|date:"d M Y, H:i" }}
+                                        ({{ scan.total_objects }} objects)
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <button class="form-submit" type="submit">Save Waste Record</button>
+            </form>
+        </section>
+
+        <!-- SAVED RECORDS -->
+
+        <section class="panel">
+            <h2>📊 Saved Waste Impact Records</h2>
+            <p class="intro">Review the waste records you have saved.</p>
+
+            {% if waste_records %}
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Material</th>
+                                <th>Quantity</th>
+                                <th>Weight (kg)</th>
+                                <th>Scenario</th>
+                                <th>Baseline (kg CO₂e)</th>
+                                <th>Scenario (kg CO₂e)</th>
+                                <th>Estimated difference</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for record in waste_records %}
+                                <tr>
+                                    <td>{{ record.created_at|date:"d M Y H:i" }}</td>
+                                    <td>{{ record.get_material_display }}</td>
+                                    <td>{{ record.quantity }}</td>
+                                    <td>{{ record.estimated_weight_kg|floatformat:2 }}</td>
+                                    <td>{{ record.disposal_method|title }}</td>
+                                    <td>{{ record.baseline_emissions_kg|floatformat:3 }}</td>
+                                    <td>{{ record.scenario_emissions_kg|floatformat:3 }}</td>
+                                    <td>{{ record.estimated_avoided_emissions_kg|floatformat:3 }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty">No waste records saved yet.</div>
+            {% endif %}
+        </section>
+
+        <!-- CARBON CHART -->
+
+        <section class="panel">
+            <h2>📈 Carbon Impact Comparison</h2>
+            <p class="intro">
+                Compare the illustrative baseline and disposal-scenario estimates
+                for your saved waste records.
+            </p>
+
+            {% if carbon_chart.labels %}
+                <div class="chart-container">
+                    <canvas id="carbonImpactChart"></canvas>
+                </div>
+            {% else %}
+                <div class="empty">
+                    Save a waste record to display the carbon comparison chart.
+                </div>
+            {% endif %}
+        </section>
+
+        <!-- ACTION TRACKER -->
+
+        <section class="panel">
+            <h2>🌍 Sustainability Action Tracker</h2>
+            <p class="intro">
+                Record a sustainable action you have completed. Points represent
+                engagement, not independently verified carbon reductions.
+            </p>
+
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add_action">
+
+                <div class="form-grid">
+                    <div class="field">
+                        <label for="action_type">Action completed</label>
+                        <select id="action_type" name="action_type" required>
+                            <option value="recycling">Sorted waste correctly (+10)</option>
+                            <option value="reusable">Used a reusable item (+10)</option>
+                            <option value="energy">Reduced electricity use (+15)</option>
+                            <option value="transport">Used low-carbon transport (+15)</option>
+                            <option value="composting">Composted organic waste (+10)</option>
+                            <option value="water">Reduced water use (+5)</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="description">Notes (optional)</label>
+                        <input id="description" name="description"
+                               type="text" maxlength="250"
+                               placeholder="e.g. Took reusable bags shopping">
+                    </div>
+                </div>
+
+                <button class="form-submit" type="submit">
+                    Record Completed Action
+                </button>
+            </form>
+        </section>
+
+        <!-- RECENT ACTIONS -->
+
+        <section class="panel">
+            <h2>✅ Recent Sustainability Actions</h2>
+
+            {% if actions %}
+                <div class="action-list">
+                    {% for item in actions %}
+                        <div class="action-item">
+                            <div>
+                                <strong>{{ item.get_action_type_display }}</strong>
+
+                                {% if item.description %}
+                                    <div>{{ item.description }}</div>
+                                {% endif %}
+
+                                <div class="small-muted">
+                                    {{ item.created_at|date:"d M Y, H:i" }}
+                                </div>
+                            </div>
+
+                            <span class="points">+{{ item.points }} points</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty">No sustainability actions recorded yet.</div>
+            {% endif %}
+        </section>
+
+        <footer>
+            Carbon estimates use demonstration factors. Verify emission factors,
+            materials, and local disposal guidance before formal reporting.
+        </footer>
+
+    </main>
+
+    {% if carbon_chart.labels %}
+        {{ carbon_chart|json_script:"carbon-chart-data" }}
+
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script>
+            const chartData = JSON.parse(
+                document.getElementById("carbon-chart-data").textContent
+            );
+
+            const chartCanvas = document.getElementById("carbonImpactChart");
+
+            if (chartCanvas && window.Chart) {
+                new Chart(chartCanvas, {
+                    type: "bar",
+                    data: {
+                        labels: chartData.labels,
+                        datasets: [
+                            {
+                                label: "Baseline estimate (kg CO₂e)",
+                                data: chartData.baseline,
+                                backgroundColor: "#9aab9e",
+                                borderRadius: 6
+                            },
+                            {
+                                label: "Scenario estimate (kg CO₂e)",
+                                data: chartData.scenario,
+                                backgroundColor: "#2e8659",
+                                borderRadius: 6
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            intersect: false,
+                            mode: "index"
+                        },
+                        plugins: {
+                            legend: {
+                                position: "bottom"
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: "Estimated kg CO₂e"
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        </script>
+    {% endif %}
+</body>
+</html>

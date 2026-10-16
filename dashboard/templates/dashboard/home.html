@@ -1,270 +1,1816 @@
 
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Carbon Footprint Intelligence Platform</title>
-
-    {% load static %}
-    <link rel="stylesheet" href="{% static 'dashboard/style.css' %}">
+    <title>Carbon Footprint Dashboard</title>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <link rel="stylesheet" href="{% static 'dashboard/style.css' %}">
+
+    <style>
+        :root {
+            --green: #00634f;
+            --dark-green: #004b3c;
+            --light-green: #eaf5ef;
+            --page-bg: #f3faf6;
+            --text: #153d34;
+            --muted: #658078;
+            --border: #c9e4d8;
+            --white: #ffffff;
+            --red: #bd4a42;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: var(--page-bg);
+            color: var(--text);
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        button, input, select {
+            font: inherit;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        button:disabled {
+            cursor: not-allowed;
+            opacity: 0.55;
+        }
+
+        .app-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 245px;
+            flex-shrink: 0;
+            padding: 28px 18px;
+            background: var(--dark-green);
+            color: white;
+        }
+
+        .brand {
+            font-size: 23px;
+            font-weight: 800;
+            line-height: 1.4;
+            margin: 0 10px 8px;
+        }
+
+        .brand-subtitle {
+            margin: 0 10px 30px;
+            font-size: 13px;
+            color: #c8e7da;
+        }
+
+        .nav-link {
+            display: block;
+            padding: 13px 14px;
+            margin-bottom: 8px;
+            border-radius: 9px;
+            color: #e6f5ee;
+            text-decoration: none;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            background: #16735e;
+            color: white;
+        }
+
+        .main-content {
+            flex: 1;
+            min-width: 0;
+            padding: 30px;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        h1 {
+            margin: 0 0 8px;
+            font-size: clamp(25px, 3vw, 34px);
+        }
+
+        h2 {
+            margin-top: 0;
+            font-size: 22px;
+        }
+
+        h3 {
+            font-size: 17px;
+        }
+
+        p {
+            line-height: 1.55;
+        }
+
+        .muted {
+            color: var(--muted);
+        }
+
+        .section {
+            margin-bottom: 25px;
+            scroll-margin-top: 20px;
+        }
+
+        .card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            padding: 23px;
+            box-shadow: 0 4px 14px rgba(0, 75, 60, 0.045);
+            min-width: 0;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 16px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            padding: 20px;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 13px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--muted);
+            margin-bottom: 12px;
+        }
+
+        .stat-value {
+            font-size: clamp(21px, 2.2vw, 29px);
+            font-weight: 800;
+            overflow-wrap: anywhere;
+        }
+
+        .stat-note {
+            margin-top: 9px;
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 17px;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .field label {
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .field input {
+            width: 100%;
+            min-width: 0;
+            padding: 12px;
+            border: 1px solid #b8d8ca;
+            border-radius: 9px;
+            background: #f8fcf9;
+            color: var(--text);
+        }
+
+        .field input:focus {
+            outline: 2px solid #82c5ac;
+            border-color: var(--green);
+        }
+
+        .button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            border: 0;
+            border-radius: 10px;
+            background: var(--green);
+            color: white;
+            padding: 13px 19px;
+            font-weight: 700;
+            text-decoration: none;
+            margin-top: 17px;
+        }
+
+        .button:hover {
+            background: var(--dark-green);
+        }
+
+        .button.secondary {
+            color: var(--green);
+            background: var(--light-green);
+            border: 1px solid var(--border);
+        }
+
+        .button.danger {
+            background: var(--red);
+        }
+
+        .button-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .upload-input {
+            padding: 18px;
+            border: 1px solid #b8d8ca;
+            border-radius: 12px;
+            background: #edf7f1;
+            width: 100%;
+        }
+
+        .notice {
+            padding: 14px 16px;
+            border-radius: 9px;
+            background: var(--light-green);
+            border: 1px solid var(--border);
+            margin-bottom: 15px;
+        }
+
+        .error-notice {
+            color: #8b2c26;
+            background: #fff0ee;
+            border-color: #efc7c2;
+        }
+
+        .camera-video {
+            display: block;
+            width: 100%;
+            max-width: 720px;
+            max-height: 480px;
+            background: #102c25;
+            object-fit: contain;
+            border-radius: 12px;
+            margin-top: 15px;
+        }
+
+        .camera-placeholder {
+            max-width: 720px;
+            min-height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            background: #eaf3ee;
+            border: 1px dashed #a6cdbc;
+            border-radius: 12px;
+            padding: 25px;
+            color: var(--muted);
+        }
+
+        .detection-image {
+            width: 100%;
+            max-width: 650px;
+            display: block;
+            border-radius: 12px;
+            margin-top: 12px;
+        }
+
+        .result-counts {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 9px;
+            margin: 15px 0;
+        }
+
+        .count-chip {
+            padding: 9px 12px;
+            border-radius: 20px;
+            background: var(--light-green);
+            border: 1px solid var(--border);
+            font-size: 13px;
+        }
+
+        .table-wrap {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            min-width: 480px;
+        }
+
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid #e0eee7;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        th {
+            background: #f0f8f3;
+        }
+
+        .recommendation {
+            padding: 15px;
+            background: #f3faf6;
+            border-left: 4px solid var(--green);
+            border-radius: 8px;
+            margin: 12px 0;
+        }
+
+        .recommendation h3 {
+            margin: 0 0 6px;
+        }
+
+        .empty-state {
+            padding: 20px;
+            color: var(--muted);
+            text-align: center;
+            background: #f6fbf8;
+            border-radius: 10px;
+        }
+
+        .footer {
+            color: var(--muted);
+            font-size: 12px;
+            padding: 15px 0;
+        }
+
+        @media (max-width: 1050px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .sidebar {
+                width: 205px;
+            }
+        }
+
+        @media (max-width: 720px) {
+            .app-layout {
+                display: block;
+            }
+
+            .sidebar {
+                width: 100%;
+                padding: 18px;
+            }
+
+            .brand {
+                margin-bottom: 12px;
+            }
+
+            .brand-subtitle {
+                margin-bottom: 15px;
+            }
+
+            .nav-links {
+                display: flex;
+                overflow-x: auto;
+                gap: 6px;
+            }
+
+            .nav-link {
+                white-space: nowrap;
+                margin: 0;
+                padding: 10px 12px;
+            }
+
+            .main-content {
+                padding: 18px;
+            }
+
+            .grid,
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                gap: 10px;
+            }
+
+            .stat-card {
+                padding: 15px;
+            }
+
+            .card {
+                padding: 17px;
+            }
+        }
+    </style>
 </head>
 
 <body>
-<main class="container">
+<div class="app-layout">
 
-    <header class="page-header">
-        <p class="eyebrow">ENVIRONMENTAL INTELLIGENCE</p>
-        <h1>Carbon Footprint Intelligence Platform</h1>
-        <p>
-            AI-powered object detection and electricity emissions estimation.
-        </p>
-    </header>
+    <aside class="sidebar">
+        <div class="brand">🌿 CarbonLens </div>
+        <p class="brand-subtitle">Carbon Footprint Monitor</p>
 
-    <form method="POST" enctype="multipart/form-data" class="panel">
-        {% csrf_token %}
+        <nav class="nav-links">
+            
+<nav class="nav-links">
+    <a class="nav-link active" href="#dashboard">Dashboard</a>
+    <a class="nav-link" href="#calculator">Carbon Calculator</a>
+    <a class="nav-link" href="#object-detection">Object Detection</a>
+    <a class="nav-link" href="#live-camera">Live Camera</a>
+    <a class="nav-link" href="#recommendations">Recommendations</a>
+    <a class="nav-link" href="#history">History</a>
+    <a class="nav-link" href="#digital-twin">Digital Twin</a>
+    <a class="nav-link" href="{% url 'sustainability' %}">
+        Sustainability Hub
+    </a>
+    
+</nav>
 
-        <h2>Computer Vision</h2>
+        </nav>
+    </aside>
 
-        <label for="building_image">Upload an image</label>
-        <input
-            type="file"
-            id="building_image"
-            name="building_image"
-            accept=".jpg,.jpeg,.png,.webp"
-        >
+    <main class="main-content">
 
-        <p class="hint">
-            JPEG, PNG or WebP. Maximum 5 MB.
-        </p>
+        <header class="page-header" id="dashboard">
+            <div>
+                <h1>Carbon Footprint Dashboard</h1>
+                <p class="muted">
+                    Monitor emissions, explore object detection, and discover ways
+                    to reduce your environmental impact.
+                </p>
+            </div>
+        </header>
 
-        <hr>
+        {% if messages %}
+            {% for message in messages %}
+                <div class="notice">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
 
-        <h2>Carbon Footprint Calculator</h2>
+        {% if error %}
+            <div class="notice error-notice">{{ error }}</div>
+        {% endif %}
 
-        <label for="electricity">
-            Electricity consumption (kWh)
-        </label>
-        <input
-            type="number"
-            id="electricity"
-            name="electricity"
-            min="0"
-            step="any"
-            value="{{ electricity|default_if_none:'' }}"
-            required
-        >
+        <!-- Dashboard summary cards -->
+        <section class="stats-grid">
 
-        <label for="reduction_percent">
-            Simulated electricity reduction (%)
-        </label>
-        <input
-            type="number"
-            id="reduction_percent"
-            name="reduction_percent"
-            min="0"
-            max="100"
-            step="any"
-            value="{{ reduction_percent }}"
-            required
-        >
-
-        <button type="submit">Analyze Image and Calculate</button>
-    </form>
-
-    {% if image_message %}
-        <section class="panel">
-            <p>{{ image_message }}</p>
-        </section>
-    {% endif %}
-
-    {% if detection_error %}
-        <section class="panel error-panel">
-            <h2>Detection Error</h2>
-            <p>{{ detection_error }}</p>
-            <p>Check the VS Code terminal for the detailed error.</p>
-        </section>
-    {% endif %}
-
-    {% if uploaded_image_url %}
-        <section class="panel">
-            <h2>Original Image</h2>
-            <img
-                class="analysis-image"
-                src="{{ uploaded_image_url }}"
-                alt="Original uploaded image"
-            >
-        </section>
-    {% endif %}
-
-    {% if annotated_image_url %}
-        <section class="panel">
-            <h2>AI Object Detection Results</h2>
-
-            <img
-                class="analysis-image"
-                src="{{ annotated_image_url }}"
-                alt="Detected objects with bounding boxes"
-            >
-
-            <div class="stats-grid">
-                <article class="stat-card">
-                    <p>Total objects detected</p>
-                    <h3>{{ total_objects }}</h3>
-                </article>
-
-                <article class="stat-card">
-                    <p>Object categories found</p>
-                    <h3>{{ object_counts|length }}</h3>
-                </article>
+            <div class="stat-card">
+                <div class="stat-label">Total Carbon Emissions</div>
+                <div class="stat-value">
+                    {% if result %}
+                        {{ result.Total|floatformat:2 }}
+                    {% else %}
+                        0.00
+                    {% endif %}
+                    <span style="font-size:13px;">kg CO₂e</span>
+                </div>
+                <div class="stat-note">From the latest calculation</div>
             </div>
 
-            {% if object_counts %}
-                <h3>Object Category Chart</h3>
+            <div class="stat-card">
+                <div class="stat-label">Potential Emissions Saved</div>
+                <div class="stat-value">
+                    {% if saved_emissions != None %}
+                        {{ saved_emissions|default:0|floatformat:2 }}
+                    {% else %}
+                        0.00
+                    {% endif %}
+                    <span style="font-size:13px;">kg</span>
+                </div>
+                <div class="stat-note">Estimated reduction</div>
+            </div>
 
-                <div class="chart-container">
-                    <canvas id="objectChart"></canvas>
+            <div class="stat-card">
+                <div class="stat-label">Reduced Carbon Emissions</div>
+                <div class="stat-value">
+                    {% if reduced_emissions != None %}
+                        {{ reduced_emissions|default:0|floatformat:2 }}
+                    {% else %}
+                        0.00
+                    {% endif %}
+                    <span style="font-size:13px;">kg</span>
+                </div>
+                <div class="stat-note">Based on your reduction setting</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-label">Objects Detected</div>
+                <div class="stat-value" id="dashboardObjectCount">
+                    {{ total_objects|default:0 }}
+                </div>
+                <div class="stat-note">Latest available detection result</div>
+            </div>
+
+        </section>
+
+        <!-- Carbon calculator -->
+        <section class="section card" id="calculator">
+            <h2>🌍 Carbon Footprint Calculator</h2>
+            <p class="muted">
+                Enter your activity data to estimate your carbon emissions.
+            </p>
+
+            <form method="post" action="{% url 'home' %}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="calculate">
+
+                <div class="form-grid">
+
+                    <div class="field">
+                        <label for="electricity">Grid electricity (kWh)</label>
+                        <input type="number" id="electricity" name="electricity"
+                               min="0" step="any" required
+                               value="{{ request.POST.electricity|default:'100' }}">
+                    </div>
+
+                    <div class="field">
+                        <label for="vehicles">Number of vehicles/trips</label>
+                        <input type="number" id="vehicles" name="vehicles"
+                               min="0" step="1" required
+                               value="{{ request.POST.vehicles|default:'1' }}">
+                    </div>
+
+                    <div class="field">
+                        <label for="distance_km">Travel distance (km)</label>
+                        <input type="number" id="distance_km" name="distance_km"
+                               min="0" step="any" required
+                               value="{{ request.POST.distance_km|default:'10' }}">
+                    </div>
+
+                    <div class="field">
+                        <label for="solar_kwh">Solar electricity generated (kWh)</label>
+                        <input type="number" id="solar_kwh" name="solar_kwh"
+                               min="0" step="any" required
+                               value="{{ request.POST.solar_kwh|default:'0' }}">
+                    </div>
+
+                    <div class="field">
+                        <label for="ac_hours">AC usage (hours)</label>
+                        <input type="number" id="ac_hours" name="ac_hours"
+                               min="0" step="any" required
+                               value="{{ request.POST.ac_hours|default:'2' }}">
+                    </div>
+
+                    <div class="field">
+                        <label for="waste_kg">Waste generated (kg)</label>
+                        <input type="number" id="waste_kg" name="waste_kg"
+                               min="0" step="any" required
+                               value="{{ request.POST.waste_kg|default:'1' }}">
+                    </div>
+
                 </div>
 
-                <h3>Object Category Summary</h3>
+                <button class="button" type="submit">
+                    Calculate Carbon Footprint
+                </button>
+            </form>
+        </section>
 
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Object category</th>
-                            <th>Count</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for name, count in object_counts.items %}
+        <!-- Emissions results -->
+        <section class="section card" id="emissions">
+            <h2>📊 Emissions Breakdown</h2>
+
+            {% if result %}
+                <div class="notice">
+                    Estimated total: <strong>{{ result.Total|floatformat:2 }} kg CO₂e</strong>
+                </div>
+
+                <div class="grid">
+                    <div>
+                        <h3>Emissions by Category</h3>
+                        <canvas id="emissionsPieChart"></canvas>
+                    </div>
+
+                    <div>
+                        <h3>Category Comparison</h3>
+                        <canvas id="emissionsBarChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="table-wrap" style="margin-top:20px;">
+                    <table>
+                        <thead>
                             <tr>
-                                <td>{{ name|title }}</td>
-                                <td>{{ count }}</td>
+                                <th>Category</th>
+                                <th>Estimated emissions (kg CO₂e)</th>
                             </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Electricity</td>
+                                <td>{{ result.Electricity|floatformat:2 }}</td>
+                            </tr>
+                            <tr>
+                                <td>Transportation</td>
+                                <td>{{ result.Transportation|floatformat:2 }}</td>
+                            </tr>
+                            <tr>
+                                <td>Waste</td>
+                                <td>{{ result.Waste|floatformat:2 }}</td>
+                            </tr>
+                            <tr>
+                                <th>Total</th>
+                                <th>{{ result.Total|floatformat:2 }}</th>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                {% if grid_electricity != None %}
+                    <p class="muted">
+                        Estimated grid electricity after solar:
+                        {{ grid_electricity|floatformat:2 }} kWh
+                    </p>
+                {% endif %}
+
+                {% if ac_electricity != None %}
+                    <p class="muted">
+                        Estimated AC electricity:
+                        {{ ac_electricity|floatformat:2 }} kWh
+                    </p>
+                {% endif %}
+
             {% else %}
-                <p>No supported objects were detected.</p>
+                <div class="empty-state">
+                    Submit the calculator above to view your emissions breakdown and charts.
+                </div>
+            {% endif %}
+        </section>
+
+        <!-- Image upload object detection -->
+        <section class="section card" id="object-detection">
+            <h2>🖼️ Image Object Detection</h2>
+            <p class="muted">
+                Upload an image to detect objects using your YOLO model.
+                Image detection does not automatically calculate carbon emissions.
+            </p>
+
+            <form method="post" action="{% url 'home' %}"
+                  enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="detect_image">
+
+                <div class="field">
+                    <label for="image">Choose an image</label>
+                    <input class="upload-input" type="file" id="image"
+                           name="image" accept=".jpg,.jpeg,.png,.webp,image/*">
+                    <span class="muted">
+                        Supported formats: JPG, JPEG, PNG and WebP.
+                    </span>
+                </div>
+
+                <button type="submit" class="button">
+                    Upload &amp; Detect Objects
+                </button>
+            </form>
+
+            {% if uploaded_image_url %}
+                <div class="grid" style="margin-top:25px;">
+                    <div>
+                        <h3>Uploaded Image</h3>
+                        <img class="detection-image"
+                             src="{{ uploaded_image_url }}"
+                             alt="Uploaded image">
+                    </div>
+
+                    {% if annotated_image_url %}
+                        <div>
+                            <h3>Detected Objects</h3>
+                            <img class="detection-image"
+                                 src="{{ annotated_image_url }}"
+                                 alt="Image annotated with detected objects">
+                        </div>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            {% if object_counts %}
+                <h3>Detection Summary</h3>
+                <div class="result-counts">
+                    {% for name, count in object_counts.items %}
+                        <span class="count-chip">
+                            {{ name }}: {{ count }}
+                        </span>
+                    {% endfor %}
+                </div>
+                <p>
+                    Total detected objects:
+                    <strong>{{ total_objects|default:0 }}</strong>
+                </p>
             {% endif %}
 
             {% if detections %}
-                <h3>Detection Details</h3>
-
-                <ul class="detection-list">
-                    {% for item in detections %}
-                        <li>
-                            <strong>{{ item.name|title }}</strong>
-                            — {{ item.confidence }}% confidence
-                            <br>
-                            <small>Bounding box: {{ item.box }}</small>
-                        </li>
-                    {% endfor %}
-                </ul>
+                <h3>Individual Detections</h3>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Object</th>
+                                <th>Confidence</th>
+                                <th>Bounding box</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for detection in detections %}
+                                <tr>
+                                    <td>{{ detection.name }}</td>
+                                    <td>{{ detection.confidence }}%</td>
+                                    <td>{{ detection.box }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             {% endif %}
         </section>
-    {% endif %}
 
-    {% if calculation_error %}
-        <section class="panel error-panel">
-            <p>{{ calculation_error }}</p>
-        </section>
-    {% endif %}
+        <!-- Live camera detection -->
+        <section class="section card" id="live-camera">
+            <h2>📷 Live Camera Detection</h2>
+            <p class="muted">
+                Start your webcam, capture a frame and send it to the object
+                detection model.
+            </p>
 
-    {% if result != None %}
-        <section class="panel">
-            <h2>Carbon Footprint Results</h2>
+            {% csrf_token %}
 
-            <div class="stats-grid">
-                <article class="stat-card">
-                    <p>Estimated emissions</p>
-                    <h3>{{ result|floatformat:2 }}</h3>
-                    <span>kg CO₂e</span>
-                </article>
-
-                <article class="stat-card">
-                    <p>Estimated emissions saved</p>
-                    <h3>{{ saved_emissions|floatformat:2 }}</h3>
-                    <span>kg CO₂e</span>
-                </article>
+            <div id="cameraPlaceholder" class="camera-placeholder">
+                Your camera preview will appear here after you select
+                <strong>&nbsp;Start Camera</strong>.
             </div>
 
-            <p>Footprint category: <strong>{{ footprint_status }}</strong></p>
-            <p>Simulated reduction: {{ reduction_percent }}%</p>
+            <video id="cameraVideo" class="camera-video"
+                   autoplay playsinline muted hidden></video>
 
-            <p>
-                Simulated electricity after reduction:
-                {{ reduced_usage|floatformat:2 }} kWh
-            </p>
+            <canvas id="cameraCanvas" hidden></canvas>
 
-            <p>
-                Estimated emissions after reduction:
-                {{ reduced_emissions|floatformat:2 }} kg CO₂e
-            </p>
+            <div class="button-row">
+                <button class="button" type="button" id="startCameraBtn">
+                    Start Camera
+                </button>
 
-            <p class="hint">
-                Demo emission factor: {{ emission_factor }} kg CO₂e/kWh.
-                Replace this with a verified factor appropriate to your
-                electricity source and location.
-            </p>
+                <button class="button secondary" type="button"
+                        id="captureBtn" disabled>
+                    Capture &amp; Detect
+                </button>
 
-            <div class="progress-track">
-                <div
-                    class="progress-fill"
-                    style="width:{{ bar_width }}%;"
-                ></div>
+                <button class="button danger" type="button"
+                        id="stopCameraBtn" disabled>
+                    Stop Camera
+                </button>
             </div>
 
-            <p class="hint">
-                Remaining electricity use after the simulated reduction.
-            </p>
+            <p id="cameraStatus" class="notice" role="status"
+               aria-live="polite">Camera is not started.</p>
+
+            <div id="cameraResults" aria-live="polite"></div>
         </section>
-    {% endif %}
 
-</main>
+        <!-- Recommendations -->
+        <section class="section card" id="recommendations">
+            <h2>💡 Sustainability Recommendations</h2>
 
-{% if object_counts %}
+            {% if recommendations %}
+                {% for recommendation in recommendations %}
+                    <div class="recommendation">
+                        {% if recommendation.title %}
+                            <h3>{{ recommendation.title }}</h3>
+                        {% endif %}
+
+                        {% if recommendation.message %}
+                            <p>{{ recommendation.message }}</p>
+                        {% else %}
+                            <p>{{ recommendation }}</p>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    Calculate your carbon footprint to see recommendations
+                    if your Django view generates them.
+                </div>
+            {% endif %}
+        </section>
+
+        <!-- Calculation history -->
+        <section class="section card" id="history">
+            <h2>🕘 Calculation &amp; Detection History</h2>
+
+            <h3>Carbon Calculations</h3>
+
+            {% if saved_calculations %}
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Total emissions</th>
+                                <th>Saved emissions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in saved_calculations %}
+                                <tr>
+                                    <td>{{ item.created_at|date:"d M Y, H:i" }}</td>
+                                    <td>{{ item.total_emissions|floatformat:2 }} kg</td>
+                                    <td>{{ item.saved_emissions|floatformat:2 }} kg</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="muted">
+                    Previous calculations will appear here when provided by the Django view.
+                </p>
+            {% endif %}
+
+            <h3 style="margin-top:25px;">Camera Detection History</h3>
+            <div id="cameraHistory">
+                <p class="muted">Loading saved camera scans...</p>
+            </div>
+        </section>
+
+        
+            <div class="history-actions">
+                <form method="post"
+                      action="{% url 'clear_calculation_history' %}"
+                      onsubmit="return confirm('Are you sure you want to delete all carbon calculation history?');">
+                    {% csrf_token %}
+                    <button type="submit" class="clear-history-btn">
+                        🗑️ Clear Calculation History
+                    </button>
+                </form>
+
+                <form method="post"
+                      action="{% url 'clear_camera_history' %}"
+                      onsubmit="return confirm('Are you sure you want to delete all camera detection history?');">
+                    {% csrf_token %}
+                    <button type="submit" class="clear-history-btn">
+                        🗑️ Clear Camera History
+                    </button>
+                </form>
+            </div>
+
+        <!-- Digital Twin placeholder -->
+         
+<section class="section card" id="digital-twin">
+<style>
+#digital-twin {
+    color: #243b32;
+}
+#digital-twin .dt-header {
+    padding: 24px;
+    border-radius: 14px;
+    background: #edf7ef;
+    margin-bottom: 20px;
+}
+#digital-twin .dt-header h2 {
+    color: #26734d;
+    margin-top: 0;
+}
+#digital-twin .dt-panel {
+    background: #fff;
+    border: 1px solid #dce9df;
+    border-radius: 14px;
+    padding: 22px;
+    margin-bottom: 20px;
+}
+#digital-twin .dt-panel h3 {
+    color: #276747;
+    margin-top: 0;
+}
+#digital-twin .dt-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px;
+}
+#digital-twin .dt-field label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+#digital-twin .dt-field input[type="number"] {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px;
+    border: 1px solid #ceddd2;
+    border-radius: 7px;
+}
+#digital-twin .dt-field input[type="range"] {
+    width: 100%;
+    accent-color: #318257;
+}
+#digital-twin .dt-value {
+    display: block;
+    text-align: right;
+    color: #28764c;
+    font-size: 13px;
+    margin-top: 5px;
+}
+#digital-twin .dt-kpis {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin: 20px 0;
+}
+#digital-twin .dt-kpi {
+    background: #eff8f1;
+    padding: 17px;
+    border-radius: 10px;
+}
+#digital-twin .dt-kpi span {
+    display: block;
+    font-size: 13px;
+    color: #5b7262;
+}
+#digital-twin .dt-kpi strong {
+    display: block;
+    font-size: 24px;
+    color: #26734d;
+    margin-top: 10px;
+    overflow-wrap: anywhere;
+}
+#digital-twin .dt-track {
+    height: 22px;
+    background: #e7eee9;
+    border-radius: 20px;
+    overflow: hidden;
+    margin: 8px 0 20px;
+}
+#digital-twin .dt-bar {
+    height: 100%;
+    width: 0;
+    background: #32895a;
+    transition: width .2s;
+}
+#digital-twin .dt-baseline-bar {
+    background: #8c9d91;
+}
+#digital-twin .dt-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+#digital-twin .dt-table th,
+#digital-twin .dt-table td {
+    padding: 12px 8px;
+    text-align: left;
+    border-bottom: 1px solid #e2ebe4;
+    font-size: 14px;
+}
+#digital-twin .dt-table th {
+    background: #f1f8f3;
+}
+#digital-twin .dt-button {
+    background: #28764c;
+    color: white;
+    padding: 11px 16px;
+    border: 0;
+    border-radius: 8px;
+    cursor: pointer;
+    margin: 8px 8px 0 0;
+}
+#digital-twin .dt-button.secondary {
+    background: #e7f2e9;
+    color: #276747;
+}
+#digital-twin .dt-note {
+    color: #64776a;
+    font-size: 13px;
+    line-height: 1.6;
+}
+@media(max-width:700px) {
+    #digital-twin .dt-grid,
+    #digital-twin .dt-kpis {
+        grid-template-columns: 1fr;
+    }
+    #digital-twin .dt-panel {
+        padding: 15px;
+    }
+    #digital-twin .dt-table th,
+    #digital-twin .dt-table td {
+        font-size: 12px;
+    }
+}
+
+
+</style>
+
+
+
+<div class="dt-header">
+    <h2>🏫 Campus Digital Twin</h2>
+    <p>
+        Simulate campus activities and understand their impact on
+        carbon emissions.
+    </p>
+    <p class="dt-note">
+        Change the baseline campus settings and use the simulation
+        controls to compare different sustainability scenarios.
+    </p>
+</div>
+
+<div class="dt-panel">
+    <h3>🏢 Baseline Campus Settings</h3>
+    <p class="dt-note">Enter the current daily campus values.</p>
+
+    <div class="dt-grid">
+        <div class="dt-field">
+            <label for="dt-base-electricity">Baseline electricity (kWh/day)</label>
+            <input type="number" id="dt-base-electricity"
+                   min="0" value="850" step="10">
+        </div>
+
+        <div class="dt-field">
+            <label for="dt-base-solar">Baseline solar generation (kWh/day)</label>
+            <input type="number" id="dt-base-solar"
+                   min="0" value="200" step="10">
+        </div>
+
+        <div class="dt-field">
+            <label for="dt-base-vehicles">Baseline vehicles</label>
+            <input type="number" id="dt-base-vehicles"
+                   min="0" value="150" step="1">
+        </div>
+
+        <div class="dt-field">
+            <label for="dt-base-ac">Baseline AC usage (hours/device/day)</label>
+            <input type="number" id="dt-base-ac"
+                   min="0" max="24" value="8" step="0.5">
+        </div>
+
+        <div class="dt-field">
+            <label for="dt-base-waste">Baseline waste (kg/day)</label>
+            <input type="number" id="dt-base-waste"
+                   min="0" value="180" step="1">
+        </div>
+    </div>
+</div>
+
+<div class="dt-panel">
+    <h3>🎛️ Simulation Controls</h3>
+    <p class="dt-note">
+        Move the sliders to test energy-saving, solar, transport,
+        AC and waste-reduction scenarios.
+    </p>
+
+    <div class="dt-grid">
+        <div class="dt-field">
+            <label for="dt-sim-electricity">Simulated electricity (kWh/day)</label>
+            <input type="range" id="dt-sim-electricity"
+                   min="0" max="2000" step="10" value="850">
+            <span class="dt-value" id="dt-val-electricity">850 kWh/day</span>
+        </div>
+
+        <div class="dt-field">
+            <label for="dt-sim-solar">Simulated solar generation (kWh/day)</label>
+            <input type="range" id="dt-sim-solar"
+                   min="0" max="1000" step="10" value="200">
+            <span class="dt-value" id="dt-val-solar">200 kWh/day</span>
+        </div>
+
+        <div class="dt-field">
+            <label for="dt-sim-vehicles">Simulated number of vehicles</label>
+            <input type="range" id="dt-sim-vehicles"
+                   min="0" max="500" value="150">
+            <span class="dt-value" id="dt-val-vehicles">150 vehicles</span>
+        </div>
+
+        <div class="dt-field">
+            <label for="dt-sim-ac">Simulated AC usage (hours/device/day)</label>
+            <input type="range" id="dt-sim-ac"
+                   min="0" max="24" step="0.5" value="8">
+            <span class="dt-value" id="dt-val-ac">8 hours</span>
+        </div>
+
+        <div class="dt-field">
+            <label for="dt-sim-waste">Simulated waste (kg/day)</label>
+            <input type="range" id="dt-sim-waste"
+                   min="0" max="500" value="180">
+            <span class="dt-value" id="dt-val-waste">180 kg/day</span>
+        </div>
+    </div>
+
+    <button type="button" class="dt-button" id="dt-reset">
+        Reset to Baseline
+    </button>
+    <button type="button" class="dt-button secondary" id="dt-export">
+        Export Results CSV
+    </button>
+
+    <p class="dt-note" id="dt-status" aria-live="polite">
+        Simulation ready.
+    </p>
+</div>
+
+<div class="dt-panel">
+    <h3>📊 Campus Carbon Impact</h3>
+
+    <div class="dt-kpis">
+        <div class="dt-kpi">
+            <span>Baseline emissions</span>
+            <strong id="dt-baseline-total">0.00</strong>
+            <span>kg CO₂e/day</span>
+        </div>
+        <div class="dt-kpi">
+            <span>Simulated emissions</span>
+            <strong id="dt-simulated-total">0.00</strong>
+            <span>kg CO₂e/day</span>
+        </div>
+        <div class="dt-kpi">
+            <span>Estimated reduction</span>
+            <strong id="dt-reduction">0.00%</strong>
+            <span id="dt-reduction-note">Compared with baseline</span>
+        </div>
+    </div>
+
+    <p>Baseline campus</p>
+    <div class="dt-track">
+        <div class="dt-bar dt-baseline-bar" id="dt-bar-baseline"></div>
+    </div>
+
+    <p>Simulated campus</p>
+    <div class="dt-track">
+        <div class="dt-bar" id="dt-bar-simulated"></div>
+    </div>
+
+    <h3>Emissions Breakdown</h3>
+    <table class="dt-table">
+        <thead>
+            <tr>
+                <th>Category</th>
+                <th>Baseline</th>
+                <th>Simulated</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Electricity and AC</td>
+                <td id="dt-be">0.00</td>
+                <td id="dt-se">0.00</td>
+            </tr>
+            <tr>
+                <td>Transportation</td>
+                <td id="dt-bt">0.00</td>
+                <td id="dt-st">0.00</td>
+            </tr>
+            <tr>
+                <td>Waste</td>
+                <td id="dt-bw">0.00</td>
+                <td id="dt-sw">0.00</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p class="dt-note">
+        Illustrative assumptions: electricity 0.70 kg CO₂e/kWh;
+        transportation 0.12 kg CO₂e per vehicle-km; waste
+        0.50 kg CO₂e/kg; AC power 2 kW/device. Transport assumes
+        10 km per vehicle per day. Replace these demo assumptions
+        with verified campus data before reporting results.
+    </p>
+</div>
+
 <script>
-    const categoryLabels = [
-        {% for name, count in object_counts.items %}
-            "{{ name|escapejs }}",
-        {% endfor %}
-    ];
+(function () {
+    const root = document.getElementById("digital-twin");
+    if (!root || root.dataset.dtReady) return;
+    root.dataset.dtReady = "1";
 
-    const categoryCounts = [
-        {% for name, count in object_counts.items %}
-            {{ count }},
-        {% endfor %}
-    ];
+    const keys = ["electricity", "solar", "vehicles", "ac", "waste"];
 
-    new Chart(document.getElementById("objectChart"), {
-        type: "bar",
+    const defaults = {
+        electricity: 850,
+        solar: 200,
+        vehicles: 150,
+        ac: 8,
+        waste: 180
+    };
+
+    const maximums = {
+        electricity: 2000,
+        solar: 1000,
+        vehicles: 500,
+        ac: 24,
+        waste: 500
+    };
+
+    const fmt = n => Number(n).toLocaleString("en-IN", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+
+    function getValues(prefix) {
+        const result = {};
+        keys.forEach(key => {
+            const el = document.getElementById(prefix + key);
+            result[key] = Math.max(0, Number(el.value) || 0);
+        });
+        result.ac = Math.min(24, result.ac);
+        return result;
+    }
+
+    function calculate(v) {
+        const electricity = Math.max(
+            0, v.electricity + (v.ac * 2) - v.solar
+        ) * 0.70;
+
+        const transport = v.vehicles * 10 * 0.12;
+        const waste = v.waste * 0.50;
+
+        return {
+            electricity,
+            transport,
+            waste,
+            total: electricity + transport + waste
+        };
+    }
+
+    function put(id, value) {
+        document.getElementById(id).textContent = value;
+    }
+
+    function update() {
+        const baseline = getValues("dt-base-");
+        const sim = getValues("dt-sim-");
+        const b = calculate(baseline);
+        const s = calculate(sim);
+
+        const units = {
+            electricity: " kWh/day",
+            solar: " kWh/day",
+            vehicles: " vehicles",
+            ac: " hours",
+            waste: " kg/day"
+        };
+
+        keys.forEach(key => {
+            put("dt-val-" + key, sim[key] + units[key]);
+        });
+
+        put("dt-baseline-total", fmt(b.total));
+        put("dt-simulated-total", fmt(s.total));
+
+        const difference = b.total - s.total;
+        const percent = b.total > 0 ? difference / b.total * 100 : 0;
+
+        put("dt-reduction",
+            (percent < 0 ? "−" : "") + fmt(Math.abs(percent)) + "%");
+
+        put("dt-reduction-note",
+            b.total === 0
+                ? "Baseline emissions are zero"
+                : fmt(Math.abs(difference)) +
+                  " kg CO₂e/day " +
+                  (difference >= 0 ? "estimated avoided" : "estimated increase"));
+
+        put("dt-be", fmt(b.electricity));
+        put("dt-se", fmt(s.electricity));
+        put("dt-bt", fmt(b.transport));
+        put("dt-st", fmt(s.transport));
+        put("dt-bw", fmt(b.waste));
+        put("dt-sw", fmt(s.waste));
+
+        const maximum = Math.max(b.total, s.total, 1);
+
+        document.getElementById("dt-bar-baseline").style.width =
+            (b.total / maximum * 100) + "%";
+
+        document.getElementById("dt-bar-simulated").style.width =
+            (s.total / maximum * 100) + "%";
+
+        put("dt-status",
+            "Results updated. This is a modelled estimate, not live sensor data.");
+    }
+
+    function reset() {
+        keys.forEach(key => {
+            const baselineInput = document.getElementById("dt-base-" + key);
+            const slider = document.getElementById("dt-sim-" + key);
+            let value = Math.max(0, Number(baselineInput.value) || 0);
+            value = Math.min(value, maximums[key]);
+            if (key === "ac") value = Math.min(value, 24);
+            slider.value = value;
+        });
+        update();
+    }
+
+    keys.forEach(key => {
+        document.getElementById("dt-sim-" + key)
+            .addEventListener("input", update);
+
+        document.getElementById("dt-base-" + key)
+            .addEventListener("change", function () {
+                let value = Math.max(0, Number(this.value) || 0);
+                if (key === "ac") value = Math.min(value, 24);
+                this.value = value;
+                update();
+            });
+    });
+
+    document.getElementById("dt-reset")
+        .addEventListener("click", reset);
+
+    document.getElementById("dt-export")
+        .addEventListener("click", function () {
+            const b = getValues("dt-base-");
+            const s = getValues("dt-sim-");
+            const br = calculate(b);
+            const sr = calculate(s);
+
+            const rows = [
+                ["Metric", "Baseline", "Simulated"],
+                ...keys.map(k => [k, b[k], s[k]]),
+                ["Electricity emissions kg CO2e/day",
+                    br.electricity, sr.electricity],
+                ["Transport emissions kg CO2e/day",
+                    br.transport, sr.transport],
+                ["Waste emissions kg CO2e/day",
+                    br.waste, sr.waste],
+                ["Total emissions kg CO2e/day",
+                    br.total, sr.total]
+            ];
+
+            const csv = rows.map(row =>
+                row.map(value =>
+                    '"' + String(value).replace(/"/g, '""') + '"'
+                ).join(",")
+            ).join("\r\n");
+
+            const blob = new Blob(["\uFEFF" + csv], {
+                type: "text/csv;charset=utf-8;"
+            });
+
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = "campus-digital-twin.csv";
+            link.click();
+            URL.revokeObjectURL(url);
+        });
+
+    reset();
+})();
+</script>
+</section>
+
+
+        <footer class="footer">
+            Carbon Footprint Dashboard · Estimates depend on the emission factors
+            and assumptions configured in your application.
+        </footer>
+
+    </main>
+</div>
+
+<script>
+/* ---------------------------
+   Carbon emissions charts
+---------------------------- */
+{% if result %}
+const emissionsLabels = [
+    "Electricity",
+    "Transportation",
+    "Waste"
+];
+
+const emissionsValues = [
+    Number("{{ result.Electricity|default:0 }}"),
+    Number("{{ result.Transportation|default:0 }}"),
+    Number("{{ result.Waste|default:0 }}")
+];
+
+const pieCanvas = document.getElementById("emissionsPieChart");
+
+if (pieCanvas) {
+    new Chart(pieCanvas, {
+        type: "doughnut",
         data: {
-            labels: categoryLabels,
+            labels: emissionsLabels,
             datasets: [{
-                label: "Number of objects",
-                data: categoryCounts,
-                borderWidth: 1
+                data: emissionsValues
             }]
         },
         options: {
             responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        precision: 0
-                    }
+            plugins: {
+                legend: {
+                    position: "bottom"
                 }
             }
         }
     });
-</script>
+}
+
+const barCanvas = document.getElementById("emissionsBarChart");
+
+if (barCanvas) {
+    new Chart(barCanvas, {
+        type: "bar",
+        data: {
+            labels: emissionsLabels,
+            datasets: [{
+                label: "Emissions (kg CO₂e)",
+                data: emissionsValues
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
 {% endif %}
+
+/* ---------------------------
+   Live camera detection
+---------------------------- */
+(() => {
+    const video = document.getElementById("cameraVideo");
+    const canvas = document.getElementById("cameraCanvas");
+    const placeholder = document.getElementById("cameraPlaceholder");
+
+    const startBtn = document.getElementById("startCameraBtn");
+    const captureBtn = document.getElementById("captureBtn");
+    const stopBtn = document.getElementById("stopCameraBtn");
+
+    const statusText = document.getElementById("cameraStatus");
+    const resultsDiv = document.getElementById("cameraResults");
+    const historyDiv = document.getElementById("cameraHistory");
+
+    let cameraStream = null;
+
+    function getCsrfToken() {
+        const input = document.querySelector(
+            '[name="csrfmiddlewaretoken"]'
+        );
+
+        if (input) return input.value;
+
+        const match = document.cookie.match(/(?:^|; )csrftoken=([^;]*)/);
+        return match ? decodeURIComponent(match[1]) : "";
+    }
+
+    function setStatus(message, isError = false) {
+        statusText.textContent = message;
+        statusText.classList.toggle("error-notice", isError);
+    }
+
+    async function readResponse(response) {
+        const contentType = response.headers.get("content-type") || "";
+
+        if (!contentType.includes("application/json")) {
+            throw new Error(
+                "The server did not return JSON. Check the Django URL and view."
+            );
+        }
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || "The request failed.");
+        }
+
+        return data;
+    }
+
+    function stopCamera() {
+        if (cameraStream) {
+            cameraStream.getTracks().forEach(track => track.stop());
+            cameraStream = null;
+        }
+
+        video.srcObject = null;
+        video.hidden = true;
+        placeholder.hidden = false;
+
+        startBtn.disabled = false;
+        captureBtn.disabled = true;
+        stopBtn.disabled = true;
+
+        setStatus("Camera stopped.");
+    }
+
+    startBtn.addEventListener("click", async () => {
+        if (!navigator.mediaDevices ||
+            !navigator.mediaDevices.getUserMedia) {
+            setStatus(
+                "Camera access is unavailable. Open the site on localhost or HTTPS using a supported browser.",
+                true
+            );
+            return;
+        }
+
+        startBtn.disabled = true;
+        setStatus("Requesting camera permission...");
+
+        try {
+            cameraStream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    facingMode: "environment"
+                },
+                audio: false
+            });
+
+            video.srcObject = cameraStream;
+            video.hidden = false;
+            placeholder.hidden = true;
+
+            await video.play();
+
+            captureBtn.disabled = false;
+            stopBtn.disabled = false;
+
+            setStatus("Camera is running. Capture a frame to detect objects.");
+        } catch (error) {
+            console.error("Camera error:", error);
+
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+                cameraStream = null;
+            }
+
+            video.srcObject = null;
+            video.hidden = true;
+            placeholder.hidden = false;
+
+            startBtn.disabled = false;
+            captureBtn.disabled = true;
+            stopBtn.disabled = true;
+
+            setStatus(
+                "Could not start the camera. Check browser permission and ensure another app is not using it.",
+                true
+            );
+        }
+    });
+
+    captureBtn.addEventListener("click", async () => {
+        if (!cameraStream || !video.videoWidth || !video.videoHeight) {
+            setStatus("Start the camera and wait for the preview first.", true);
+            return;
+        }
+
+        captureBtn.disabled = true;
+        setStatus("Capturing frame and detecting objects...");
+
+        try {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
+            const context = canvas.getContext("2d");
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            const blob = await new Promise(resolve => {
+                canvas.toBlob(resolve, "image/jpeg", 0.9);
+            });
+
+            if (!blob) {
+                throw new Error("Could not capture a camera image.");
+            }
+
+            const formData = new FormData();
+            formData.append("frame", blob, "camera.jpg");
+
+            const response = await fetch("/camera-detect/", {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": getCsrfToken()
+                },
+                body: formData,
+                credentials: "same-origin"
+            });
+
+            const data = await readResponse(response);
+
+            const total = Number(data.total_objects || 0);
+            document.getElementById("dashboardObjectCount").textContent = total;
+
+            resultsDiv.replaceChildren();
+
+            const heading = document.createElement("h3");
+            heading.textContent = "Latest Detection Results";
+            resultsDiv.appendChild(heading);
+
+            const totalLine = document.createElement("p");
+            totalLine.textContent = "Total objects detected: " + total;
+            resultsDiv.appendChild(totalLine);
+
+            const counts = data.object_counts || {};
+            const chips = document.createElement("div");
+            chips.className = "result-counts";
+
+            const names = Object.keys(counts);
+
+            if (names.length === 0) {
+                const empty = document.createElement("p");
+                empty.textContent = "No objects were detected in this frame.";
+                resultsDiv.appendChild(empty);
+            } else {
+                names.forEach(name => {
+                    const chip = document.createElement("span");
+                    chip.className = "count-chip";
+                    chip.textContent = name + ": " + counts[name];
+                    chips.appendChild(chip);
+                });
+
+                resultsDiv.appendChild(chips);
+            }
+
+            if (data.image_url) {
+                const imageHeading = document.createElement("h3");
+                imageHeading.textContent = "Annotated Image";
+                resultsDiv.appendChild(imageHeading);
+
+                const image = document.createElement("img");
+                image.className = "detection-image";
+                image.src = data.image_url;
+                image.alt = "Camera image with detected objects";
+                resultsDiv.appendChild(image);
+            }
+
+            if (Array.isArray(data.detections) && data.detections.length) {
+                const detailHeading = document.createElement("h3");
+                detailHeading.textContent = "Detected Objects";
+                resultsDiv.appendChild(detailHeading);
+
+                const table = document.createElement("table");
+                const head = document.createElement("thead");
+                const headRow = document.createElement("tr");
+
+                ["Object", "Confidence"].forEach(label => {
+                    const th = document.createElement("th");
+                    th.textContent = label;
+                    headRow.appendChild(th);
+                });
+
+                head.appendChild(headRow);
+                table.appendChild(head);
+
+                const body = document.createElement("tbody");
+
+                data.detections.forEach(detection => {
+                    const row = document.createElement("tr");
+
+                    const nameCell = document.createElement("td");
+                    nameCell.textContent = detection.name || "Unknown";
+
+                    const confidenceCell = document.createElement("td");
+                    confidenceCell.textContent =
+                        (detection.confidence ?? "N/A") +
+                        (detection.confidence !== undefined ? "%" : "");
+
+                    row.appendChild(nameCell);
+                    row.appendChild(confidenceCell);
+                    body.appendChild(row);
+                });
+
+                table.appendChild(body);
+
+                const wrapper = document.createElement("div");
+                wrapper.className = "table-wrap";
+                wrapper.appendChild(table);
+                resultsDiv.appendChild(wrapper);
+            }
+
+            setStatus("Detection completed successfully.");
+
+            await loadCameraHistory();
+        } catch (error) {
+            console.error("Detection error:", error);
+            setStatus(error.message || "Detection failed.", true);
+        } finally {
+            captureBtn.disabled = !cameraStream;
+        }
+    });
+
+    stopBtn.addEventListener("click", stopCamera);
+
+    async function loadCameraHistory() {
+        try {
+            const response = await fetch("/camera-history/", {
+                credentials: "same-origin"
+            });
+
+            const data = await readResponse(response);
+
+            const scans = Array.isArray(data) ? data :
+                (data.history || data.results || []);
+
+            historyDiv.replaceChildren();
+
+            if (!scans.length) {
+                const empty = document.createElement("p");
+                empty.className = "muted";
+                empty.textContent = "No saved camera scans yet.";
+                historyDiv.appendChild(empty);
+                return;
+            }
+
+            const table = document.createElement("table");
+            const head = document.createElement("thead");
+            const headRow = document.createElement("tr");
+
+            ["Date", "Objects detected", "Object counts", "Image"].forEach(label => {
+                const th = document.createElement("th");
+                th.textContent = label;
+                headRow.appendChild(th);
+            });
+
+            head.appendChild(headRow);
+            table.appendChild(head);
+
+            const body = document.createElement("tbody");
+
+            scans.forEach(scan => {
+                const row = document.createElement("tr");
+
+                const dateCell = document.createElement("td");
+                dateCell.textContent = scan.created_at || "—";
+
+                const totalCell = document.createElement("td");
+                totalCell.textContent = scan.total_objects ?? 0;
+
+                const countsCell = document.createElement("td");
+                countsCell.textContent = JSON.stringify(scan.object_counts || {});
+
+                const imageCell = document.createElement("td");
+
+                if (scan.image_url) {
+                    const link = document.createElement("a");
+                    link.href = scan.image_url;
+                    link.target = "_blank";
+                    link.rel = "noopener noreferrer";
+                    link.textContent = "View image";
+                    imageCell.appendChild(link);
+                } else {
+                    imageCell.textContent = "—";
+                }
+
+                row.appendChild(dateCell);
+                row.appendChild(totalCell);
+                row.appendChild(countsCell);
+                row.appendChild(imageCell);
+
+                body.appendChild(row);
+            });
+
+            table.appendChild(body);
+
+            const wrapper = document.createElement("div");
+            wrapper.className = "table-wrap";
+            wrapper.appendChild(table);
+            historyDiv.appendChild(wrapper);
+        } catch (error) {
+            console.error("History error:", error);
+
+            historyDiv.replaceChildren();
+
+            const message = document.createElement("p");
+            message.className = "muted";
+            message.textContent =
+                "Camera history could not be loaded. Check the /camera-history/ endpoint.";
+            historyDiv.appendChild(message);
+        }
+    }
+
+    loadCameraHistory();
+
+    window.addEventListener("pagehide", () => {
+        if (cameraStream) {
+            cameraStream.getTracks().forEach(track => track.stop());
+        }
+    });
+})();
+</script>
 
 </body>
 </html>

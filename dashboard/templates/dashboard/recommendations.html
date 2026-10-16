@@ -1,0 +1,45 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CarbonLens Recommendations</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f3f7ef;
+            color: #25382d;
+            padding: 24px;
+        }
+        main { max-width: 850px; margin: auto; }
+        article {
+            background: white;
+            padding: 20px;
+            margin: 16px 0;
+            border-radius: 12px;
+            border: 1px solid #dce8d9;
+        }
+        h1, h2 { color: #246b45; }
+        p { line-height: 1.6; }
+        a { color: #246b45; }
+    </style>
+</head>
+<body>
+<main>
+    <h1>🌿 Sustainability Recommendations</h1>
+    <p>Suggestions based on your carbon-footprint inputs.</p>
+
+    {% for item in recommendations %}
+        <article>
+            <h2>{{ item.title }}</h2>
+            <p>{{ item.message }}</p>
+        </article>
+    {% empty %}
+        <p>Complete a carbon calculation to receive recommendations.</p>
+    {% endfor %}
+
+    <p><a href="/">← Back to Dashboard</a></p>
+</main>
+</body>
+</html>

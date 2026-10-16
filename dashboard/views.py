@@ -37,6 +37,29 @@ def validate_image(uploaded_file):
     return None
 
 
+def make_recommendations(result, inputs):
+    """Generate personalized carbon-reduction recommendations."""
+    try:
+        return generate_recommendations(
+            electricity_kwh=inputs["electricity"],
+            vehicles=inputs["vehicles"],
+            distance_km=inputs["distance_km"],
+            solar_kwh=inputs["solar_kwh"],
+            ac_hours=inputs["ac_hours"],
+            waste_kg=inputs["waste_kg"],
+        )
+    except Exception:
+        logger.exception("Recommendation generation failed.")
+        return [
+            {
+                "title": "Keep Tracking Your Carbon Footprint",
+                "message": (
+                    "Continue tracking your electricity, transport, "
+                    "and waste to find ways to reduce emissions."
+                ),
+            }
+        ]
+
 
 
 

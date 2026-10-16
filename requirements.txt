@@ -1,0 +1,7 @@
+
+Django
+gunicorn
+whitenoise
+Pillow
+ultralytics
+opencv-python-headless

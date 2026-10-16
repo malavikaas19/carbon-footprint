@@ -25,9 +25,11 @@ SECRET_KEY = 'django-insecure-p1=4w(36d))&y2n=^0qhv=!_s00^ub(e^o^se0qb87*z-j&p^n
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [ "carbon-footprint-zhe2.onrender.com",
+ALLOWED_HOSTS = [
+    "carbon-footprint-zhe2.onrender.com",
     "localhost",
-    "127.0.0.1",]
+    "127.0.0.1",
+]
 
 
 # Application definition
